@@ -22,6 +22,8 @@ export const typeDefs = `
 
     type Query {
         users: [User]
+
+        """This Needs Authorization"""
         products(
             category: String,
             minPrice: Float,
@@ -29,12 +31,16 @@ export const typeDefs = `
             limit: Int = 10,
             offset: Int = 0
         ): [Product]
+
+        """This Needs Authorization"""
         orders(
             productId: String,
             limit: Int = 10,
             offset: Int = 0
         ): [Order]
+
         topRankingUsers: [User]
+        
         totalSalesPerCategory: [CategorySales]
     }
 
@@ -52,13 +58,26 @@ export const typeDefs = `
     }
 
     type Mutation {
+        """This Needs Authorization"""
         createUser(username: String!, password: String!): User
+
+        """This Needs Authorization"""
         updateUser(username: String, password: String): Success
+
         login(username: String!, password: String!): AccessToken
+
+        """This Needs Authorization"""
         createProduct(name: String!, category: String!, price: Float!): Product
+
+        """This Needs Authorization"""
         updateProduct(id: ID!, name: String, category: String, price: Float): Product
+
         createOrder(productId: ID!, quantity: Int!): Order
+
+        """This Needs Authorization"""
         updateOrder(id: ID!, status: String): Success
+
+        """This Needs Authorization"""
         deleteProduct(id: ID!): Boolean
     }
 `
