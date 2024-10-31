@@ -1,10 +1,13 @@
 export const typeDefs = `
+
+    """ A signle User """
     type User {
         id: ID!
         username: String!
         orders: [Order]
     }
 
+    """ A single Product """
     type Product {
         id: ID!
         name: String!
@@ -12,6 +15,7 @@ export const typeDefs = `
         price: Float!
     }
 
+    """ A Single Order """
     type Order {
         id: ID!
         user: User!
@@ -40,15 +44,17 @@ export const typeDefs = `
         ): [Order]
 
         topRankingUsers: [User]
-        
+
         totalSalesPerCategory: [CategorySales]
     }
 
+    """ Sales By Category """
     type CategorySales {
         category: String!
         totalSales: Float!
     }
 
+    """ Access Token when logged In"""
     type AccessToken {
         token: String!
     }
