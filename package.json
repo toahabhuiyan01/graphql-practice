@@ -1,18 +1,14 @@
 {
-  "name": "@foodbhai/backend",
+  "name": "@productmanagement/backend",
   "version": "1.0.0",
-  "main": "build/api/serve-api.js",
+  "main": "build/index.js",
   "scripts": {
-    "lint": "eslint ./src --ext .js,.ts",
-    "lint:fix": "npm run lint -- --fix",
     "build": "tsc",
-    "run-server": "node .build/index.js",
+    "run-server": "node build/index.js",
     "start": "npm run build && npm run run-server",
-    "seed-data": "node .build/seedData.js",
-    "watch-start": "nodemon --delay 2 -w build/ -x 'npm run start'",
+    "seed-data": "node build/seedData.js",
     "gen-mig": "ts-node ./node_modules/typeorm/cli.js migration:generate -d src/datasource.ts",
-    "run-mig": "ts-node ./node_modules/typeorm/cli.js migration:run -d src/datasource.ts",
-    "creat-mig": "typeorm migration:create"
+    "run-mig": "ts-node ./node_modules/typeorm/cli.js migration:run -d src/datasource.ts"
   },
   "dependencies": {
     "axios": "^1.7.7",

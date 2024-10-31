@@ -12,8 +12,8 @@ export const AppDataSource = new DataSource({
   username: uri.username,
   password: uri.password,
   database: uri.pathname.slice(1),
-  entities: ['.build/models/*.js'],
-  migrations: ['.build/migration/*.js'],
+  entities: ['build/models/*.js'],
+  migrations: ['build/migration/*.js'],
 });
 
 export async function initializeDatabase() {
