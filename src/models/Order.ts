@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, Index } from 'typeorm';
 import Product from './Product';
 import User from './User';
 
@@ -8,14 +8,18 @@ export default class Order {
 	id!: number;
 
     @Column()
+    @Index() // when order filter by quantity or sort by quantity
     quantity!: number;
 
     @Column()
+    @Index() // when fetch orders by status
     status!: 'pending' | 'completed' | 'cancelled'
 
     @ManyToOne(() => Product, (product) => product.orders)
+    @Index()
     product!: Product
 
     @ManyToOne(() => User, (user) => user.orders)
+    @Index()
     user!: User
 }

@@ -29,6 +29,8 @@ __decorate([
 ], Product.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
+    (0, typeorm_1.Index)() // Filter products by category
+    ,
     __metadata("design:type", String)
 ], Product.prototype, "category", void 0);
 __decorate([
@@ -37,6 +39,8 @@ __decorate([
 ], Product.prototype, "name", void 0);
 __decorate([
     (0, typeorm_1.Column)('decimal'),
+    (0, typeorm_1.Index)() // when fetch products by price, range, condition
+    ,
     __metadata("design:type", Number)
 ], Product.prototype, "price", void 0);
 __decorate([
@@ -48,6 +52,7 @@ __decorate([
     __metadata("design:type", Array)
 ], Product.prototype, "orders", void 0);
 Product = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)(),
+    (0, typeorm_1.Index)('proudctIdCategory', ['id', 'category'])
 ], Product);
 exports.default = Product;

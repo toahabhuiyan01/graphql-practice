@@ -61,22 +61,28 @@ exports.resolvers = {
             return data;
         },
         topRankingUsers: async () => {
+            console.time("query-started");
             const users = await datasource_1.AppDataSource.getRepository(User_1.default)
                 .createQueryBuilder('user')
                 .leftJoinAndSelect('user.orders', 'order')
                 .groupBy('user.id, order.id')
                 .orderBy('COUNT(order.id)', 'DESC')
                 .getMany();
+            console.timeEnd("query-started");
             return users.map(({ id, username, orders }) => ({ id, username, orders }));
         },
         totalSalesPerCategory: async () => {
-            const sales = await datasource_1.AppDataSource.getRepository(Product_1.default)
+            console.time("query-started");
+            let sales = await datasource_1.AppDataSource.getRepository(Product_1.default)
                 .createQueryBuilder('product')
                 .select('product.category')
                 .leftJoin('product.orders', 'order')
                 .addSelect('SUM(order.quantity * product.price)', 'totalSales')
                 .groupBy('product.category')
+                // TypeORM doesn't support to use aliases as orderby
+                .orderBy('SUM(order.quantity * product.price)', 'DESC')
                 .getRawMany();
+            console.timeEnd("query-started");
             return sales.map(({ product_category, totalSales }) => ({ category: product_category, totalSales: parseFloat(totalSales) }));
         },
     },

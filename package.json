@@ -8,6 +8,7 @@
     "build": "tsc",
     "run-server": "node .build/index.js",
     "start": "npm run build && npm run run-server",
+    "seed-data": "node .build/seedData.js",
     "watch-start": "nodemon --delay 2 -w build/ -x 'npm run start'",
     "gen-mig": "ts-node ./node_modules/typeorm/cli.js migration:generate -d src/datasource.ts",
     "run-mig": "ts-node ./node_modules/typeorm/cli.js migration:run -d src/datasource.ts",

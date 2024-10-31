@@ -15,11 +15,11 @@ export const resolvers = {
             }
             
             const query = AppDataSource.getRepository(Product)
-                            .createQueryBuilder('product')
-                            .innerJoin('product.user', 'user')
-                            .where('user.id =:userId', { userId })
-                            .skip (offset)
-                            .take(limit)
+                .createQueryBuilder('product')
+                .innerJoin('product.user', 'user')
+                .where('user.id =:userId', { userId })
+                .skip (offset)
+                .take(limit)
 
             if(category) {
                 query.andWhere('product.category = :category', { category })
@@ -67,23 +67,30 @@ export const resolvers = {
             return data
         },
         topRankingUsers: async () => {
+            console.time("query-started")
             const users =  await AppDataSource.getRepository(User)
                 .createQueryBuilder('user')
                 .leftJoinAndSelect('user.orders', 'order')
                 .groupBy('user.id, order.id')
                 .orderBy('COUNT(order.id)', 'DESC')
                 .getMany();
+            console.timeEnd("query-started")
             
             return users.map(({id, username, orders}) => ({ id, username, orders }));
         },
         totalSalesPerCategory: async () => {
-            const sales =  await AppDataSource.getRepository(Product)
+            console.time("query-started")
+            let sales =  await AppDataSource.getRepository(Product)
                 .createQueryBuilder('product')
                 .select('product.category')
                 .leftJoin('product.orders', 'order')
                 .addSelect('SUM(order.quantity * product.price)', 'totalSales')
                 .groupBy('product.category')
+                // TypeORM doesn't support to use aliases as orderby
+                .orderBy('SUM(order.quantity * product.price)', 'DESC')
                 .getRawMany()
+            
+            console.timeEnd("query-started")
 
             return sales.map(({ product_category, totalSales }) => ({ category: product_category, totalSales: parseFloat(totalSales) }));
         },

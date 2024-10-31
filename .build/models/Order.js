@@ -28,18 +28,24 @@ __decorate([
 ], Order.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
+    (0, typeorm_1.Index)() // when order filter by quantity or sort by quantity
+    ,
     __metadata("design:type", Number)
 ], Order.prototype, "quantity", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
+    (0, typeorm_1.Index)() // when fetch orders by status
+    ,
     __metadata("design:type", String)
 ], Order.prototype, "status", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => Product_1.default, (product) => product.orders),
+    (0, typeorm_1.Index)(),
     __metadata("design:type", Product_1.default)
 ], Order.prototype, "product", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => User_1.default, (user) => user.orders),
+    (0, typeorm_1.Index)(),
     __metadata("design:type", User_1.default)
 ], Order.prototype, "user", void 0);
 Order = __decorate([
