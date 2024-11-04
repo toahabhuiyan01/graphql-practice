@@ -20,4 +20,6 @@ export async function initializeDatabase() {
   if(!AppDataSource.isInitialized) {
     await AppDataSource.initialize()
   }
+
+  return AppDataSource
 }

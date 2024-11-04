@@ -1,20 +1,21 @@
 import User from '../models/User';
 import Product from '../models/Product';
 import Order from '../models/Order';
-import { AppDataSource } from '../datasource';
 import { generateAccessToken } from '../utils/token-utils';
+import { DataSource } from 'typeorm';
+import { ResolverContext } from '..';
 
 export const resolvers = {
     Query: {
-        users: async () => {
-            return await AppDataSource.getRepository(User).find({ relations: ['orders'] });
+        users: async (_, {}, { appDataSource }: ResolverContext) => {
+            return await appDataSource.getRepository(User).find({ relations: ['orders'] });
         },
-        products: async (_, { category, minPrice, maxPrice, limit, offset }, { userId }) => {
+        products: async (_, { category, minPrice, maxPrice, limit, offset }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
             
-            const query = AppDataSource.getRepository(Product)
+            const query = appDataSource.getRepository(Product)
                 .createQueryBuilder('product')
                 .innerJoin('product.user', 'user')
                 .where('user.id =:userId', { userId })
@@ -36,17 +37,17 @@ export const resolvers = {
             const data = await query.getMany()
             return data
         },
-        orders: async (_, { productId, limit, offset }, { userId }) => {
+        orders: async (_, { productId, limit, offset }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
-            const orderRepo = AppDataSource.getRepository(Order)
+            const orderRepo = appDataSource.getRepository(Order)
 
             const qb = orderRepo.createQueryBuilder('order')
 
 
             if(productId) {
-                const product = await AppDataSource.getRepository(Product).findOneBy({
+                const product = await appDataSource.getRepository(Product).findOneBy({
                     id: productId,
                     user: { id: userId }
                 });
@@ -66,9 +67,9 @@ export const resolvers = {
 
             return data
         },
-        topRankingUsers: async () => {
+        topRankingUsers: async ({}, {}, { appDataSource }: ResolverContext) => {
             console.time("query-started")
-            const users =  await AppDataSource.getRepository(User)
+            const users =  await appDataSource.getRepository(User)
                 .createQueryBuilder('user')
                 .leftJoinAndSelect('user.orders', 'order')
                 .groupBy('user.id, order.id')
@@ -78,9 +79,13 @@ export const resolvers = {
             
             return users.map(({id, username, orders}) => ({ id, username, orders }));
         },
-        totalSalesPerCategory: async () => {
+        totalSalesPerCategory: async ({}, {}, {userId, appDataSource }: ResolverContext) => {
             console.time("query-started")
-            let sales =  await AppDataSource.getRepository(Product)
+            if(!userId) {
+                throw new Error('Unauthorized');
+            }
+
+            let sales =  await appDataSource.getRepository(Product)
                 .createQueryBuilder('product')
                 .select('product.category')
                 .leftJoin('product.orders', 'order')
@@ -96,8 +101,8 @@ export const resolvers = {
         },
     },
     Mutation: {
-        createUser: async (_: any, { username, password }: { username: string, password: string}) => {
-            const existingUser = await AppDataSource.getRepository(User).findOneBy({ username });
+        createUser: async (_: any, { username, password }: { username: string, password: string}, { appDataSource }: ResolverContext) => {
+            const existingUser = await appDataSource.getRepository(User).findOneBy({ username });
             if(existingUser) {
                 throw new Error('Username already exists');
             }
@@ -105,14 +110,14 @@ export const resolvers = {
             const user = new User();
             user.username = username;
             user.password = password;
-            return await AppDataSource.getRepository(User).save(user);
+            return await appDataSource.getRepository(User).save(user);
         },
-        updateUser: async (_: any, { username, password }: { username: string, password: string }, { userId }) => {
+        updateUser: async (_: any, { username, password }: { username: string, password: string }, { userId, appDataSource }: ResolverContext) => {
             if(userId) {
                 throw new Error('Unauthorized');
             }
 
-            const userRepo = AppDataSource.getRepository(User);
+            const userRepo = appDataSource.getRepository(User);
             const user = await userRepo.findOneBy({ id: userId });
 
             if (!user) {
@@ -125,8 +130,8 @@ export const resolvers = {
 
             return { success: true };
         },
-        login: async (_: any, { username, password }: { username: string, password: string }) => {
-            const user = await AppDataSource.getRepository(User).findOneBy({ username, password });
+        login: async (_: any, { username, password }: { username: string, password: string }, { appDataSource }: ResolverContext) => {
+            const user = await appDataSource.getRepository(User).findOneBy({ username, password });
 
             if (!user) {
                 throw new Error('Invalid username or password');
@@ -135,12 +140,12 @@ export const resolvers = {
             const token = generateAccessToken({ user: { id: user.id.toString() } });
             return { token };
         },
-        createProduct: async (_: any, { name, category, price }: { name: string, category: string, price: number }, { userId }) => {
+        createProduct: async (_: any, { name, category, price }: { name: string, category: string, price: number }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
             
-            const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
+            const user = await appDataSource.getRepository(User).findOneBy({ id: userId });
             if (!user) {
                 throw new Error('User not found');
             }
@@ -149,14 +154,14 @@ export const resolvers = {
             product.name = name;
             product.category = category;
             product.price = price;
-            return await AppDataSource.getRepository(Product).save(product);
+            return await appDataSource.getRepository(Product).save(product);
         },
-        updateProduct: async (_: any, { id, name, category, price }: { id: number, name: string, category: string, price: number }, { userId }) => {
+        updateProduct: async (_: any, { id, name, category, price }: { id: number, name: string, category: string, price: number }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
 
-            const productRepo = AppDataSource.getRepository(Product);
+            const productRepo = appDataSource.getRepository(Product);
             const product = await productRepo.findOneOrFail(
                 {
                     where: { id },
@@ -186,13 +191,13 @@ export const resolvers = {
 
             return await productRepo.save(product);
         },
-        createOrder: async (_: any, { productId, quantity }: { productId: number, quantity: number }, { userId }) => {
+        createOrder: async (_: any, { productId, quantity }: { productId: number, quantity: number }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
 
-            const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
-            const product = await AppDataSource.getRepository(Product).findOneBy({ id: productId });
+            const user = await appDataSource.getRepository(User).findOneBy({ id: userId });
+            const product = await appDataSource.getRepository(Product).findOneBy({ id: productId });
 
             if (!user || !product) {
                 throw new Error('User or Product not found');
@@ -203,14 +208,14 @@ export const resolvers = {
             order.product = product;
             order.status = 'pending';
             order.quantity = quantity;
-            return await AppDataSource.getRepository(Order).save(order);
+            return await appDataSource.getRepository(Order).save(order);
         },
-        updateOrder: async(_: any, { id, status }: { id: number, status: string }, { userId }) => {
+        updateOrder: async(_: any, { id, status }: { id: number, status: string }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
 
-            const orderRepo = AppDataSource.getRepository(Order);
+            const orderRepo = appDataSource.getRepository(Order);
             const order = await orderRepo.createQueryBuilder('order')
                 .leftJoinAndSelect('order.user', 'user')
                 .leftJoinAndSelect('order.product', 'product')
@@ -231,8 +236,17 @@ export const resolvers = {
 
             return { success: true };
         },
-        deleteProduct: async (_: any, { id }: { id: number }) => {
-            const result = await AppDataSource.getRepository(Product).delete(id);
+        deleteProduct: async (_: any, { id }: { id: number }, { userId, appDataSource }: ResolverContext) => {
+            const product = await appDataSource
+                .getRepository(Product)
+                .findOneOrFail({
+                    where: {
+                        id,
+                        user: { id: userId }
+                    } 
+                });
+
+            const result = await appDataSource.getRepository(Product).delete(product);
             return (result.affected || 0) > 0;
         },
     },

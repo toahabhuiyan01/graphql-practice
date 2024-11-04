@@ -2,15 +2,22 @@ import Express from 'express'
 import { createSchema, createYoga } from 'graphql-yoga';
 import { typeDefs } from './graphql/typeDefs'
 import { resolvers } from './graphql/resolvers'
-import { initializeDatabase } from './datasource';
+import Cors from 'cors'
+import { initializeDatabase } from './datasource'
 import { validateAccessToken } from './utils/token-utils';
+import { DataSource } from 'typeorm';
 
+export type ResolverContext = {
+    userId?: number
+    appDataSource: DataSource
+}
 
 // here we are using express, we can use any backend framework
 
 async function startServer() {
-    await initializeDatabase()
+    const appDataSource = await initializeDatabase()
     const app = Express()
+    app.use(Cors())
     const yoga = createYoga({
         schema: createSchema({
             typeDefs,
@@ -20,18 +27,18 @@ async function startServer() {
 
             // @ts-ignore
             const authorization = request.headers.headersInit?.authorization || ''
+            const authReq: ResolverContext = { appDataSource }
 
             try {
                 const token = authorization.split(' ')[1]
                 const user = validateAccessToken(token)
 
-                return {
-                    userId: user.user.id
-                }
+                authReq['userId'] = +user.user.id
             } catch(error) {
                 console.log('Unauthenticated Request')
-                return {}
             }
+
+            return authReq
         }
     })
 
