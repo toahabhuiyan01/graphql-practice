@@ -10,7 +10,7 @@ export const resolvers = {
         users: async (_, {}, { appDataSource }: ResolverContext) => {
             return await appDataSource.getRepository(User).find({ relations: ['orders'] });
         },
-        products: async (_, { category, minPrice, maxPrice, limit, offset }, { userId, appDataSource }: ResolverContext) => {
+        products: async (_, { category, minPrice, maxPrice, limit=10, page=1 }, { userId, appDataSource }: ResolverContext) => {
             if(!userId) {
                 throw new Error('Unauthorized');
             }
@@ -19,7 +19,7 @@ export const resolvers = {
                 .createQueryBuilder('product')
                 .innerJoin('product.user', 'user')
                 .where('user.id =:userId', { userId })
-                .skip (offset)
+                .skip (page * limit)
                 .take(limit)
 
             if(category) {
@@ -247,7 +247,9 @@ export const resolvers = {
                 });
 
             const result = await appDataSource.getRepository(Product).delete(product);
-            return (result.affected || 0) > 0;
+            return {
+                success: (result.affected || 0) > 0
+            }
         },
     },
 };

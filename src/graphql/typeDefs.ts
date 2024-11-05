@@ -33,7 +33,7 @@ export const typeDefs = `
             minPrice: Float,
             maxPrice: Float,
             limit: Int = 10,
-            offset: Int = 0
+            page: Int = 0
         ): [Product]
 
         """This Needs Authorization"""
